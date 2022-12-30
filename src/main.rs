@@ -5,56 +5,28 @@
 // GET REQUEST EXAMPLES:
 // curl --request GET   --url 'https://api.themoviedb.org/4/list/1'   --header "Authorization: Bearer ${API_KEY}"   --header 'Content-Type: application/json;charset=utf-8'
 // curl --request GET   --url 'https://api.themoviedb.org/4/search/tv?query=dragon'   --header "Authorization: Bearer ${API_KEY}"   --header 'Content-Type: application/json;charset=utf-8'
+// curl --request GET   --url 'https://api.themoviedb.org/4/tv/61709'   --header "Authorization: Bearer ${API_KEY}"   --header 'Content-Type: application/json;charset=utf-8'
 
-use reqwest::{
-    header::{HeaderMap, HeaderValue, AUTHORIZATION},
-    Client
-};
-use serde::{Deserialize, Serialize};
+use reqwest::Client;
+use fix_show_name::functions::{search_tv_show, get_tv_show_info};
 use tokio;
-use std::env;
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Response {
-    results: Vec<TVShow>
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct TVShow {
-    id: i32,
-    name: String,
-    overview: String
-}
 
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>>{
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
-    let api_key = env::var("API_KEY").unwrap();
-    let query_string = "dragon ball";
+    let show_name = "dragon ball";
+    let show_id = 61709;
 
     let client = Client::new();
-    let mut headers = HeaderMap::new();
 
-    // Set the authorization header with the bearer token
-    headers.insert(AUTHORIZATION, HeaderValue::from_str(&format!("Authorization: Bearer {}", api_key)).unwrap());
+    // Search TV Shows
+    // let shows = search_tv_show(client, show_name).await?;
 
-    // Make the GET request with the headers
-    // TODO: Needs to handle getting extra pages
-    let resp = client
-        .get("https://api.themoviedb.org/4/search/tv")
-        .headers(headers)
-        .query(&[("query", format!("{query_string}"))])
-        .send()
-        .await?
-        .text()
-        .await?;
+    // Get season & episode information about TV Show
+    let show_details = get_tv_show_info(client, show_id).await?;
 
-    let response: Response = serde_json::from_str(&resp)?;
-    
-    for result in response.results {
-        println!("{:?}", result)
-    }
+    // dbg!(show_details);
 
     Ok(())
 
